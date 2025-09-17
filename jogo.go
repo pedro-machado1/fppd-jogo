@@ -3,23 +3,26 @@ package main
 
 import (
 	"bufio"
+	"math/rand"
 	"os"
+	"time"
 )
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
-	simbolo   rune
-	cor       Cor
-	corFundo  Cor
-	tangivel  bool // Indica se o elemento bloqueia passagem
+	simbolo  rune
+	cor      Cor
+	corFundo Cor
+	tangivel bool // Indica se o elemento bloqueia passagem
 }
 
 // Jogo contém o estado atual do jogo
 type Jogo struct {
-	Mapa            [][]Elemento // grade 2D representando o mapa
-	PosX, PosY      int          // posição atual do personagem
-	UltimoVisitado  Elemento     // elemento que estava na posição do personagem antes de mover
-	StatusMsg       string       // mensagem para a barra de status
+	Mapa           [][]Elemento // grade 2D representando o mapa
+	PosX, PosY     int          // posição atual do personagem
+	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
+	StatusMsg      string       // mensagem para a barra de status
+	NumMoedas      *int         // num de moedas coletadas
 }
 
 // Elementos visuais do jogo
@@ -29,6 +32,8 @@ var (
 	Parede     = Elemento{'▤', CorParede, CorFundoParede, true}
 	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
+	Moeda      = Elemento{'$', CorAmarelo, CorPadrao, false}
+	Tiro       = Elemento{'*', CorVermelho, CorPadrao, false}
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -60,6 +65,10 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 				e = Inimigo
 			case Vegetacao.simbolo:
 				e = Vegetacao
+			case Moeda.simbolo:
+				e = Moeda
+			case Tiro.simbolo:
+				e = Tiro
 			case Personagem.simbolo:
 				jogo.PosX, jogo.PosY = x, y // registra a posição inicial do personagem
 			}
@@ -102,7 +111,36 @@ func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
 	// Obtem elemento atual na posição
 	elemento := jogo.Mapa[y][x] // guarda o conteúdo atual da posição
 
-	jogo.Mapa[y][x] = jogo.UltimoVisitado     // restaura o conteúdo anterior
-	jogo.UltimoVisitado = jogo.Mapa[ny][nx]   // guarda o conteúdo atual da nova posição
-	jogo.Mapa[ny][nx] = elemento              // move o elemento
+	jogo.Mapa[y][x] = jogo.UltimoVisitado   // restaura o conteúdo anterior
+	jogo.UltimoVisitado = jogo.Mapa[ny][nx] // guarda o conteúdo atual da nova posição
+	jogo.Mapa[ny][nx] = elemento            // move o elemento
+}
+
+// criar canal
+func MoedaService(jogo *Jogo, ch chan bool) {
+	// fzr um for para cada moeda elemento para dai checar o tempo para trocar posicao ver o timer
+	for x, ch := range jogo.Mapa {
+		for y, elemento := range ch {
+			if elemento.simbolo != '$' {
+				continue
+			} else {
+				go PosicaoMoeda(jogo, x, y)
+			}
+			continue
+		}
+	}
+}
+
+// ler o mapa pra ver se n pode loop infinito caso mapa n tenha espeços livres
+func PosicaoMoeda(jogo *Jogo, x int, y int) {
+	for {
+		time.Sleep((time.Duration(rand.Intn(5)) + 10) * time.Second)
+		num1, num2 := rand.Intn(len(jogo.Mapa)), rand.Intn(len(jogo.Mapa[0]))
+		if jogo.Mapa[num1][num2].simbolo == ' ' {
+			jogo.Mapa[x][y] = Elemento{' ', CorPadrao, CorPadrao, false}
+			jogo.Mapa[num1][num2] = Elemento{'$', CorAmarelo, CorPadrao, false}
+			PosicaoMoeda(jogo, num1, num2)
+			break
+		}
+	}
 }

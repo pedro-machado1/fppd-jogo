@@ -20,11 +20,15 @@ func main() {
 		panic(err)
 	}
 
+	ch := make(chan bool)
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)
 
+	go MoedaService(&jogo, ch)
+
 	// Loop principal de entrada
 	for {
+
 		evento := interfaceLerEventoTeclado()
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
