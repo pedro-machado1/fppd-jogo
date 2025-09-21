@@ -6,6 +6,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/nsf/termbox-go"
 )
 
@@ -14,14 +16,15 @@ type Cor = termbox.Attribute
 
 // Definições de cores utilizadas no jogo
 const (
-	CorPadrao     Cor = termbox.ColorDefault
-	CorCinzaEscuro    = termbox.ColorDarkGray
-	CorVermelho       = termbox.ColorRed
-	CorVerde          = termbox.ColorGreen
-	CorParede         = termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim
-	CorFundoParede    = termbox.ColorDarkGray
-	CorTexto          = termbox.ColorDarkGray
-	CorAmarelo       = termbox.ColorYellow
+	CorPadrao      Cor = termbox.ColorDefault
+	CorCinzaEscuro     = termbox.ColorDarkGray
+	CorVermelho        = termbox.ColorRed
+	CorMagenta         = termbox.ColorMagenta
+	CorVerde           = termbox.ColorGreen
+	CorParede          = termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim
+	CorFundoParede     = termbox.ColorDarkGray
+	CorTexto           = termbox.ColorDarkGray
+	CorAmarelo         = termbox.ColorYellow
 )
 
 // EventoTeclado representa uma ação detectada do teclado (como mover, sair ou interagir)
@@ -73,6 +76,7 @@ func interfaceDesenharJogo(jogo *Jogo) {
 
 	// Desenha a barra de status
 	interfaceDesenharBarraDeStatus(jogo)
+	interfaceDesenharNumMoedas(jogo.NumMoedas, jogo)
 
 	// Força a atualização do terminal
 	interfaceAtualizarTela()
@@ -107,3 +111,43 @@ func interfaceDesenharBarraDeStatus(jogo *Jogo) {
 	}
 }
 
+func interfaceDesenharNumMoedas(numMoedas int, jogo *Jogo) {
+	msg := fmt.Sprintf("Moedas: %d", numMoedas)
+	for i, c := range msg {
+		termbox.SetCell(i, len(jogo.Mapa)+2, c, CorTexto, CorPadrao)
+	}
+}
+
+func interfaceGanhou(jogo *Jogo) {
+	interfaceLimparTela()
+	msg := "Parabens você conseguiu coletar as 5 moedas, Clique Esc para voltar ao terminal"
+	for i, c := range msg {
+		termbox.SetCell(i, 5, c, CorTexto, CorPadrao)
+	}
+	interfaceAtualizarTela()
+
+	for {
+		ev := termbox.PollEvent()
+		jogo.encerrar = true
+		if ev.Key == termbox.KeyEsc {
+			break
+		}
+	}
+}
+
+func interfacePerdeu(jogo *Jogo) {
+	interfaceLimparTela()
+	msg := "Você perdeu, Clique Esc para voltar ao terminal"
+	for i, c := range msg {
+		termbox.SetCell(i, 5, c, CorTexto, CorPadrao)
+	}
+	interfaceAtualizarTela()
+
+	for {
+		ev := termbox.PollEvent()
+		jogo.encerrar = true
+		if ev.Key == termbox.KeyEsc {
+			break
+		}
+	}
+}

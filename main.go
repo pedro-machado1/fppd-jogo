@@ -20,19 +20,26 @@ func main() {
 		panic(err)
 	}
 
-	ch := make(chan bool)
+	// moeda
 	// Desenha o estado inicial do jogo
-	interfaceDesenharJogo(&jogo)
 
-	go MoedaService(&jogo, ch)
+	go jogo.Run()
+
+	go MoedaController(&jogo)
+	go InimigoController(&jogo)
+	go BotaoController(&jogo)
 
 	// Loop principal de entrada
-	for {
-
+	for !jogo.encerrar {
 		evento := interfaceLerEventoTeclado()
+		if evento.Tipo == "sair" {
+			jogo.encerrar = true
+			break
+		}
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
 		}
-		interfaceDesenharJogo(&jogo)
 	}
+
+	interfaceLimparTela()
 }
